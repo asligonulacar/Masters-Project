@@ -22,14 +22,14 @@ class FourVector:
         
         self.x=np.array([X[0],X[1],X[2],X[3]]) #4 vector
         
-        self.mass=m
+        self.m=m
         
         self.y=np.array([X[1],X[2],X[3]])
      
     #def LorentzTransform(self): 
         #general Lorentz transform matrix for 
         
-    def FourDotProduct(self,other): #as the name says...
+    def Pro(self,other): #as the name says...
         return self@FourVector.g@other  
         #return np.trace(self*FourVector.g*other)
     
@@ -40,10 +40,8 @@ class FourVector:
         return np.array([self.x[0]-other.x[0],self.x[1]-other.x[1],self.x[2]-other.x[2],self.x[3]-other.x[3]])  
     
     def EtaForZ(self,other):
-        return (2*FourVector.FourDotProduct(self,other))**0.5
-
-            
-            
+        return (2*FourVector.Pro(self,other))**0.5
+        
 
 #---------------------------DEFINING GAMMA MATRICES----------------------------------------------------------------    
 #Pauli Matrices
@@ -85,82 +83,91 @@ Epsilon_Four=([[[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
 #testing out the S function
 
 def S_plus(p1,p2,k0,k1): 
-    X=(2*(FourVector.FourDotProduct(p1.x,k0.x)*FourVector.FourDotProduct(p2.x,k1.x)-FourVector.FourDotProduct(p1.x,k1.x)*FourVector.FourDotProduct(p2.x,k0.x)+complex(0,1)*np.einsum("ijkl,i,j,k,l->",Epsilon_Four,k0.x,k1.x,p1.x,p2.x)))/(((2*FourVector.FourDotProduct(p1.x,k0.x))**0.5)*((2*FourVector.FourDotProduct(p2.x,k0.x))**0.5))
+    X=(2*(FourVector.Pro(p1.x,k0.x)*FourVector.Pro(p2.x,k1.x)-FourVector.Pro(p1.x,k1.x)*FourVector.Pro(p2.x,k0.x)+complex(0,1)*np.einsum("ijkl,i,j,k,l->",Epsilon_Four,k0.x,k1.x,p1.x,p2.x)))/(((2*FourVector.Pro(p1.x,k0.x))**0.5)*((2*FourVector.Pro(p2.x,k0.x))**0.5))
     return X
 
 def S_minus(p1,p2,k0,k1):
-    X=np.conj((2*(FourVector.FourDotProduct(p2.x,k0.x)*FourVector.FourDotProduct(p1.x,k1.x)-FourVector.FourDotProduct(p2.x,k1.x)*FourVector.FourDotProduct(p1.x,k0.x)+complex(0,1)*np.einsum("ijkl,i,j,k,l->",Epsilon_Four,k0.x,k1.x,p2.x,p1.x)))/(((2*FourVector.FourDotProduct(p2.x,k0.x))**0.5)*((2*FourVector.FourDotProduct(p1.x,k0.x))**0.5)))
+    X=np.conj((2*(FourVector.Pro(p2.x,k0.x)*FourVector.Pro(p1.x,k1.x)-FourVector.Pro(p2.x,k1.x)*FourVector.Pro(p1.x,k0.x)+complex(0,1)*np.einsum("ijkl,i,j,k,l->",Epsilon_Four,k0.x,k1.x,p2.x,p1.x)))/(((2*FourVector.Pro(p2.x,k0.x))**0.5)*((2*FourVector.Pro(p1.x,k0.x))**0.5)))
     return X
 
 
 k0=FourVector([1,0,0,1]) #gauge vectors
 k1=FourVector([0,1,0,0])
+
 #-----------------------------------GENERATE MOMENTA-------------------------------------------------------------------------
+#px and py represent the incoming momenta
+px=FourVector([0.13,0.05,0.12,0])
+py=FourVector([0.7,0.1,0.2,0.3])
 
-# p=FourVector([0.8,0.5,0.6,0.],0.173)
-# m0=((p.x[0]**2-p.x[1]**2-p.x[2]**2-p.x[3]**2)**0.5)
-# print(m0)
-# def FindA(p,m0):
-#     if m0>0:
-#         A=np.array([p.x[1]/m0,p.x[2]/m0,p.x[3]/m0]) #velocity array
-#     if m0==0:
-#         A=np.array([p.x[1],p.x[2],p.x[3]])
-#     else:
-#         0
-#     return A
+#outgoing momenta are defined in the generate momenta section as p1 and p2
+mx=0
+my=0.5916079783099616
 
-# A=FindA(p,m0)
+p=FourVector(FourVector.Addition(px,py))
+m_beta=p
+norm=(p.x[0]**2+p.x[1]**2+p.x[2]**2+p.x[3]**2)**0.5
 
-# print(A)
+m=(p.x[0]**2-p.x[1]**2-p.x[2]**2-p.x[3]**2)**0.5 #calculates mass 
 
-
-# gamma=1/np.sqrt(1-np.linalg.norm(A)**2)
-# #print(gamma)
-# m1=0.05
-# m2=0.12
+p=FourVector(p.x,m)
 
 
-# def SqLam(E,m1,m2): #SqLam function from Channel Basics
-#     arg1=((E-m1-m2)**2-4*m1*m2)
-#     if arg1>=0:
-#         return arg1
+def SqLam(E,m1,m2): #SqLam function from Channel Basics
+  arg1=((E-m1-m2)**2-4*m1*m2)
+  if arg1>=0:
+      return arg1 
 
-# def GenMomenta(p,m1,m2):
-#     new_p_y= p.y+((gamma-1)/(np.dot(A,A)))*np.dot(np.dot(p.y,A),A)-gamma*(A)*p.x[0]
-#     new_E=gamma*(p.x[0]-np.dot(A,p.y))
-#     #print(new_p_y)
-#     new_p = FourVector([new_E,new_p_y[0],new_p_y[1],new_p_y[2]])
-#     #print(new_p.x)
-#     p1m=(SqLam(new_E**2,m1**2,m2**2))**0.5/(2*new_E) #from the notes, this should give abs(3-momentum) squared
-#     #print(p1m)
-#     theta=random.uniform(0,2)*np.pi
-#     phi=random.uniform(0,1)*np.pi
-#     SphPolars=np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)])
-#     p1=FourVector([(new_E/2)*(1+(m1**2/new_E**2)-(m2**2/new_E**2)),p1m*SphPolars[0],p1m*SphPolars[1],p1m*SphPolars[2]])
-#     p2=FourVector(FourVector.Subtraction(new_p,p1))
-#     #print(p1.x)
-#     #print(p2.x)
-#     return p1
+def Boost(p):
+    p0=(p.x[0]*m_beta.x[0]-np.dot(m_beta.y,p.y))/p.m
+    c1=(p.x[0]+p0)/(p.m+m_beta.x[0])
+    c2=p.y-c1*m_beta.y
+    p=FourVector([p0,c2[0],c2[1],c2[2]],p0)
+    return p
 
+new_p=Boost(p)
 
-# p1= GenMomenta(p,m1,m2)
+m1=0
+m2=0.59160798
+new_E=new_p.x[0]
+#print(new_p.x)
+def NewP1(new_E,m1,m2,SqLam):
+    #CMS frame
+    p1m=(SqLam(new_E**2,m1**2,m2**2))**0.5/(2*new_E) 
+    theta=random.uniform(0,2)*np.pi
+    phi=random.uniform(0,1)*np.pi
+    SphPolars=np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)])
+    p1_3=p1m*SphPolars #three momentum
+    E1=(np.dot(p1_3,p1_3)+m1**2)**0.5
+    p1=FourVector([E1,p1_3[0],p1_3[1],p1_3[2]])
+    #LAB frame
+    # if m1 and m2>0:
+    #     ELAB=(s-m**2-m**2)/(2*m)
+    #     print(ELAB)
+    #     pLAB=(ELAB**2-m**2)**0.5
+        
+    #     p=FourVector([ELAB,pLAB,0,0])
+    # else:
+    #     return 0
+    return p1
 
+p1=NewP1(new_E,m1,m2,SqLam) #p1 calculated in the CMS frame.
 
-# def SwitchToLab(p): 
-#     new_p_y= p.y+((gamma-1)/np.dot(A,A))*np.dot(np.dot(p.y,A),A)+gamma*(A)*p.x[0]
-#     new_E=gamma*(p.x[0]+np.dot(A,p.y))
-#     new_p = FourVector([new_E,new_p_y[0],new_p_y[1],new_p_y[2]])
-#     return new_p
+#Calcaulating p2 in the CMS frame.
+p2_3=-p1.y
+E2=(np.dot(p2_3,p2_3)+m2**2)**0.5
+p2=FourVector([E2,p2_3[0],p2_3[1],p2_3[2]])
 
-# p1=(SwitchToLab(p1))
-# p2=FourVector(FourVector.Subtraction(p,p1))
-# #print(p1.x)
-# #
-# print(p2.x)
-# test2=(p2.x[0]**2-p2.x[1]**2-p2.x[2]**2-p2.x[3]**2)**0.5
-# test1=(p1.x[0]**2-p1.x[1]**2-p1.x[2]**2-p1.x[3]**2)**0.5
-# print(test1)
-# print(test2)
+print(p1.x)
+
+print(p2.x)
+
+print(p1.x+p2.x)
+
+print(((p2.x[0]**2-p2.x[1]**2-p2.x[2]**2-p2.x[3]**2)**0.5))
+#alpha is the fine structure constant 
+#e is the strength of the coupling 
+#costheta max is deflection angle. costheta max closer to one  the more the cross section explodes
+#costheta min =-1 the electron goes back to where it comes from.
 
 
 #------------------------------------NEW HELICITY FUNCTION---------------------------------------------------------------------------------------------------------------------------------------
@@ -198,16 +205,6 @@ def Helicity(A,initial_A):
 #add return Helicities if you want a list output.
 
 #----------------------------------------Z FUNCTION-----------------------------------------
-
-px=FourVector([0.5916/2,0,0.5916/2,0],0)
-py=FourVector([0.5916/2,0,-0.5916/2,0],0)
-p1=FourVector([0.29580399,0.05064018,-0.23454077,0.14116019],0.1)
-p2=FourVector([0.29580399,-0.05064018,0.23454077,-0.14116019],0.1)
-m1=p1.mass
-m2=p2.mass
-mx=px.mass
-my=py.mass
-
 E1=FourVector.EtaForZ(px.x,k0.x) #eta 1
 E2=FourVector.EtaForZ(py.x,k0.x) #eta 2
 E3=FourVector.EtaForZ(p1.x,k0.x) #eta 3
@@ -264,15 +261,23 @@ def Z_new(Helicity,px,py,p1,p2,cR,cL,cR_p,cL_p):
 
 q=FourVector.Addition(py,px)
 
-q_4=FourVector.FourDotProduct(q,q)*FourVector.FourDotProduct(q,q)
+q_4=FourVector.Pro(q,q)*FourVector.Pro(q,q)
 
 print(0.25*Z_new(Helicity,px,py,p1,p2,1,1,1,1)/q_4)
 e=1
 
-Z_squared=(8*e**4/q_4)*(2*mx*my*m1*m2+mx*my*FourVector.FourDotProduct(p1.x,p2.x)+m1*m2*FourVector.FourDotProduct(px.x, py.x)+FourVector.FourDotProduct(px.x,p2.x)*FourVector.FourDotProduct(py.x,p1.x)+FourVector.FourDotProduct(px.x,p1.x)*FourVector.FourDotProduct(py.x,p2.x))
+Z_squared=(8*e**4/q_4)*(2*mx*my*m1*m2+mx*my*FourVector.Pro(p1.x,p2.x)+m1*m2*FourVector.Pro(px.x, py.x)+FourVector.Pro(px.x,p2.x)*FourVector.Pro(py.x,p1.x)+FourVector.Pro(px.x,p1.x)*FourVector.Pro(py.x,p2.x))
 print(abs(Z_squared))
 #Z takes those inputs and runs a loop over all helicities.
 #construct a skeleton first and put the Z functions together by hand.
+
+
+
+
+
+
+
+
 
 
 
