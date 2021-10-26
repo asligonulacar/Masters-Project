@@ -95,46 +95,67 @@ k0=FourVector([1,0,0,1]) #gauge vectors
 k1=FourVector([0,1,0,0])
 
 #-----------------------------------GENERATE MOMENTA-------------------------------------------------------------------------
-#px and py represent the incoming momenta
-px=FourVector([0.13,0.05,0.12,0])
-py=FourVector([0.7,0.1,0.2,0.3])
-
-#outgoing momenta are defined in the generate momenta section as p1 and p2
-mx=0
-my=0.5916079783099616
-
-p=FourVector(FourVector.Addition(px,py))
-m_beta=p
-norm=(p.x[0]**2+p.x[1]**2+p.x[2]**2+p.x[3]**2)**0.5
-
-m=(p.x[0]**2-p.x[1]**2-p.x[2]**2-p.x[3]**2)**0.5 #calculates mass 
-
-p=FourVector(p.x,m)
-
+#NOTE: Its important to check that we have px=-py with px,py being three momenta.
+#UPDATE: The IncomingMomentumX makes sure that this is satisfied now.
 
 def SqLam(E,m1,m2): #SqLam function from Channel Basics
   arg1=((E-m1-m2)**2-4*m1*m2)
   if arg1>=0:
       return arg1 
 
-def Boost(p):
+def Boost(p,m_beta):
     p0=(p.x[0]*m_beta.x[0]-np.dot(m_beta.y,p.y))/p.m
     c1=(p.x[0]+p0)/(p.m+m_beta.x[0])
     c2=p.y-c1*m_beta.y
     p=FourVector([p0,c2[0],c2[1],c2[2]],p0)
     return p
 
-new_p=Boost(p)
+#masses of incoming  particles
+mx=0.003
+my=0.004
+mxy=mx+my
 
-m1=0
-m2=0.59160798
+#combined energy of the incoming particles
+E=0.5
+
+#generating random incoming momenta using random numbers for the angles
+def IncomingMomentumX(E,mx,my,SqLam):
+       p1x=(SqLam(E**2,mx**2,my**2))**0.5/(2*E)
+       ran1=np.random.uniform(0,1)
+       ran2=np.random.uniform(0,1)
+       costheta=1-2*ran1
+       sintheta=2*(ran1*(1-ran1))**0.5
+       phi=2*np.pi*ran2
+       SphPolars=np.array([sintheta*np.cos(phi),sintheta*np.sin(phi),costheta])
+       p1x_3=p1x*SphPolars
+       Ex=(np.dot(p1x_3,p1x_3)+mx**2)**0.5
+       px=FourVector([Ex,p1x_3[0],p1x_3[1],p1x_3[2]],mx)
+       return px
+
+#px and py represent the incoming momenta       
+px=IncomingMomentumX(E,mx,my,SqLam)
+py_3=-px.y
+Ey=(np.dot(py_3,py_3)+my**2)**0.5
+py=FourVector([Ey,py_3[0],py_3[1],py_3[2]],my)
+p=FourVector(FourVector.Addition(px,py))
+m_beta=p #this keeps the original value of p
+m=(p.x[0]**2-p.x[1]**2-p.x[2]**2-p.x[3]**2)**0.5 #calculates mass 
+p=FourVector(p.x,m)
+
+
+new_p=Boost(p,m_beta) #p in the CMS frame 
+
+#masses of outgoing particles
+m1=(mx/mxy)*p.m
+m2=(my/mxy)*p.m
 new_E=new_p.x[0]
 #print(new_p.x)
 def NewP1(new_E,m1,m2,SqLam):
     #CMS frame
     p1m=(SqLam(new_E**2,m1**2,m2**2))**0.5/(2*new_E) 
-    theta=random.uniform(0,2)*np.pi
-    phi=random.uniform(0,1)*np.pi
+    theta=np.random.uniform(0,2)*np.pi
+    phi=np.random.uniform(0,1)*np.pi 
+    #rho1 and rho2 will be important when it comes to the Monte Carlo integration
     SphPolars=np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)])
     p1_3=p1m*SphPolars #three momentum
     E1=(np.dot(p1_3,p1_3)+m1**2)**0.5
@@ -151,19 +172,17 @@ def NewP1(new_E,m1,m2,SqLam):
     return p1
 
 p1=NewP1(new_E,m1,m2,SqLam) #p1 calculated in the CMS frame.
-
+En1=(np.dot(p1.y,p1.y)+m1**2)**0.5
 #Calcaulating p2 in the CMS frame.
 p2_3=-p1.y
-E2=(np.dot(p2_3,p2_3)+m2**2)**0.5
-p2=FourVector([E2,p2_3[0],p2_3[1],p2_3[2]])
+En2=(np.dot(p2_3,p2_3)+m2**2)**0.5
+p2=FourVector([En2,p2_3[0],p2_3[1],p2_3[2]])
 
-print(p1.x)
+# print(px.x+py.x)
 
-print(p2.x)
+# print(p1.x)
 
-print(p1.x+p2.x)
-
-print(((p2.x[0]**2-p2.x[1]**2-p2.x[2]**2-p2.x[3]**2)**0.5))
+#print(((p1.x[0]**2-p1.x[1]**2-p1.x[2]**2-p1.x[3]**2)**0.5))
 #alpha is the fine structure constant 
 #e is the strength of the coupling 
 #costheta max is deflection angle. costheta max closer to one  the more the cross section explodes
@@ -258,18 +277,58 @@ def Z_new(Helicity,px,py,p1,p2,cR,cL,cR_p,cL_p):
         C.append(B[i]*np.conj(B[i]))
     return sum(C)
 
-
+t=FourVector.Subtraction(px,py)
+t_4=FourVector.Pro(t,t)*FourVector.Pro(t,t)
 q=FourVector.Addition(py,px)
-
 q_4=FourVector.Pro(q,q)*FourVector.Pro(q,q)
 
-print(0.25*Z_new(Helicity,px,py,p1,p2,1,1,1,1)/q_4)
-e=1
 
-Z_squared=(8*e**4/q_4)*(2*mx*my*m1*m2+mx*my*FourVector.Pro(p1.x,p2.x)+m1*m2*FourVector.Pro(px.x, py.x)+FourVector.Pro(px.x,p2.x)*FourVector.Pro(py.x,p1.x)+FourVector.Pro(px.x,p1.x)*FourVector.Pro(py.x,p2.x))
-print(abs(Z_squared))
+e=1#(4*np.pi/137)**0.5 #from the fine structure constant
+def M_sqr(Z_new):
+    M=0.25*e**4*Z_new(Helicity,px,py,p1,p2,1,1,1,1)/t_4
+    return M
+
+print(M_sqr(Z_new))
+M_squared=(8*e**4/t_4)*(2*mx*my*m1*m2+mx*my*FourVector.Pro(p1.x,p2.x)+m1*m2*FourVector.Pro(px.x, py.x)+FourVector.Pro(px.x,p2.x)*FourVector.Pro(py.x,p1.x)+FourVector.Pro(px.x,p1.x)*FourVector.Pro(py.x,p2.x))
+print(abs(M_squared))
 #Z takes those inputs and runs a loop over all helicities.
 #construct a skeleton first and put the Z functions together by hand.
+
+#---------------------FROM MATRIX ELEMENT TO CROSS SECTION-----------------------------------------------------------------------------------------------------------------------------------------------------
+#this is d(rho), I dont even need this rip.
+def Diff_Cross(M_sqr,dcostheta,dphi):
+    s=4*En1*En2
+    d_omega=dcostheta*dphi
+    pi=(px.y[0]**2+px.y[1]**2+px.y[2]**2)**0.5
+    pf=(p1.y[0]**2+p1.y[1]**2+p1.y[2]**2)**0.5
+    return(1/(8*np.pi)**2)*(1/s)*(pf/pi)*M_sqr*d_omega
+    
+
+#--------------------CALCULATING THE CROSS SECTION-MONTE CARLO------------------------------------------------------------------------------------------------------------------------------------------------
+#This should be the monte carlo integration bit.
+
+#number of samples 
+N=1000
+#function to Monte Carlo
+J=4*np.pi
+
+#the general idea is here however have to modify line 327 to fit my matrix element function 
+def Monte_Carlo(f,a,b,N):
+    b=1
+    a=0
+    subsets=np.arange(0,N+1,N/100)
+    steps=N/100
+    u=np.zeros(N)
+    for i in range(100):
+        start=int(subsets[i])
+        end=int(subsets[i+1])
+        u[start:end]=np.random.uniform(low=i/100,high=(i+1)/100,size=end-start)
+    np.random.shuffle(u)
+    u_f=f(a+(b-a)*u)
+    s=((b-a)/N)*u_f.sum()
+    return s
+    
+print(Monte_Carlo((M_sqr(Z_new)),0,1,N))
 
 
 
