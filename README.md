@@ -1,2 +1,3 @@
-# Summer-Project
-4-vector class initial commit
+# Master's Project
+#Monte Carlo event generators have been essential in the design of high energy physics experiments and predicting new phenomena. With DUNE being realised #relatively soon, simulating neutrino events has become more important than ever. My Masters project was focussed on developing a Monte Carlo event #generator in python by using object oriented methodologies, with the aim to simulate particle collisions using the helicity amplitude method for matrix #element calculations. As part of my project, I compared the helicity amplitude method to analytical methods based on completeness relations and evaluated #computational efficiency and accuracy. 
+
